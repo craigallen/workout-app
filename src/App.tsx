@@ -1,9 +1,25 @@
-// Placeholder shell (step 1). AuthGate, store and screens are added in later steps.
+import AuthGate, { useAuth } from './state/AuthGate'
+
+// Step 3–4 placeholder for the signed-in app. The store, tab bar and screens
+// replace this in step 5; sign-out then moves to the Plan tab as the spec says.
+function SignedIn() {
+  const { user, signOut } = useAuth()
+  return (
+    <main className="app stack">
+      <h1>Workouts</h1>
+      <p>Signed in as {user.email}.</p>
+      <p className="muted">Sign-in works. The app screens come in the next steps.</p>
+      <button className="btn" onClick={() => void signOut()}>
+        Sign out
+      </button>
+    </main>
+  )
+}
+
 export default function App() {
   return (
-    <main className="app">
-      <h1>Workouts</h1>
-      <p>Scaffold is running.</p>
-    </main>
+    <AuthGate>
+      <SignedIn />
+    </AuthGate>
   )
 }

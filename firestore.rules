@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // One user: only the allowlisted Google account, and only its own tree.
+    // With rules_version 2, {document=**} matches zero or more segments, so this
+    // covers users/{uid} itself and every subcollection under it.
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == uid
+        && request.auth.token.email == 'YOUR_GOOGLE_EMAIL'
+        && request.auth.token.email_verified == true;
+    }
+    // Everything else is denied by default.
+  }
+}
