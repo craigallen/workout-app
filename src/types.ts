@@ -43,6 +43,12 @@ export interface Session {
   updatedAt: Timestamp
 }
 
+/** A session without its Firestore timestamps: what the pure rule functions use. */
+export type SessionData = Omit<Session, 'createdAt' | 'updatedAt'>
+
+/** A session not yet stored (no id): what imports and the log form produce. */
+export type NewSession = Omit<SessionData, 'id'>
+
 export interface Measurement {
   id: string
   date: string
