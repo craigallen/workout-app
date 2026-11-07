@@ -5,15 +5,14 @@ import type { Exercise, Length, PlanItem, WorkoutId } from './types'
 export const SCHEMA_VERSION = 1
 export const DEFAULT_WEEKLY_TARGET = 3
 
-// NOTE: `name` must match the header text in row 1 of the old Sheet's
-// Workouts CSV, because import maps columns by that text. `station` is
-// written to row 2 on export. Both are provisional until checked against
-// the real CSV.
+// `station` values are taken from row 2 of the old Sheet's Workouts CSV.
+// `name` is the app's display name; the Sheet's row-1 header text for each
+// exercise is mapped in lib/csv.ts.
 export const EXERCISES: Record<string, Exercise> = {
   gobletSquat: {
     id: 'gobletSquat',
     name: 'Goblet squat',
-    station: 'kettlebell / dumbbells',
+    station: 'off-machine',
     loadType: 'lb',
     repMin: 10,
     repMax: 15,
@@ -31,7 +30,7 @@ export const EXERCISES: Record<string, Exercise> = {
   chestPress: {
     id: 'chestPress',
     name: 'Chest press',
-    station: 'press arms',
+    station: 'press arm',
     loadType: 'plate',
     repMin: 10,
     repMax: 12,
@@ -67,7 +66,7 @@ export const EXERCISES: Record<string, Exercise> = {
   plank: {
     id: 'plank',
     name: 'Plank / cable crunch',
-    station: 'floor / high pulley',
+    station: '--',
     loadType: 'none',
     repMin: 30,
     repMax: 45,
@@ -112,7 +111,7 @@ export const EXERCISES: Record<string, Exercise> = {
   preacherCurl: {
     id: 'preacherCurl',
     name: 'Preacher curl',
-    station: 'preacher curl pad',
+    station: 'preacher pad',
     loadType: 'plate',
     repMin: 10,
     repMax: 12,
