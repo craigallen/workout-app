@@ -1,12 +1,14 @@
-// Sign-in screen vs app. Access is decided by firestore.rules (the single
+// Sign-in screen vs app. Google sign-in uses a redirect on the hosted site and a
+// popup on localhost. Access is decided by firestore.rules (the single
 // source of truth for the allowed email): after Google sign-in, the gate reads
 // users/{uid} from the server. "permission-denied" means this account isn't
 // allowed, so it is signed out and told so.
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { FirebaseError } from 'firebase/app'
-import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth'
+import { getRedirectResult, onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut, type User } from 'firebase/auth'
 import { doc, getDocFromServer } from 'firebase/firestore'
 import { auth, db, googleProvider } from '../lib/firebase'
+import { shouldUseRedirect } from '../lib/firebaseConfig'
 import SignIn from '../screens/SignIn'
 
 /** Remembers the last account the server allowed, so the app can open offline. */
@@ -97,6 +99,11 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // Errors from a redirect sign-in show up when the page loads again.
+  useEffect(() => {
+    getRedirectResult(auth).catch((err: unknown) => setNotice(signInMessage(err)))
+  }, [])
+
   useEffect(
     () =>
       onAuthStateChanged(auth, (user) => {
@@ -109,14 +116,14 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     [check],
   )
 
-  // Called straight from the button's click handler, with no await before
-  // signInWithPopup, so mobile browsers treat the popup as user-initiated.
+  // On the hosted site (served from the auth domain) the page redirects to
+  // Google and back. On localhost a popup is used, called straight from the
+  // click handler so the browser treats it as user-initiated.
   const handleSignIn = () => {
     setNotice(null)
     setBusy(true)
-    signInWithPopup(auth, googleProvider)
-      .catch((err: unknown) => setNotice(signInMessage(err)))
-      .finally(() => setBusy(false))
+    const start = shouldUseRedirect() ? signInWithRedirect(auth, googleProvider) : signInWithPopup(auth, googleProvider)
+    start.catch((err: unknown) => setNotice(signInMessage(err))).finally(() => setBusy(false))
   }
 
   const handleSignOut = useCallback(async () => {

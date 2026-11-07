@@ -1,11 +1,14 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles.css'
-import { missingConfig } from './lib/firebaseConfig'
+import { authDomainRedirect, missingConfig } from './lib/firebaseConfig'
 
 const root = createRoot(document.getElementById('root')!)
+const redirectTo = authDomainRedirect()
 
-if (missingConfig.length) {
+if (redirectTo) {
+  location.replace(redirectTo)
+} else if (missingConfig.length) {
   // Without the Firebase config nothing can work; say exactly what's missing
   // instead of letting the Firebase SDK fail with a cryptic error.
   root.render(
@@ -19,7 +22,7 @@ if (missingConfig.length) {
           </li>
         ))}
       </ul>
-      <p className="muted">Set them in .env.local (local) or in the Vercel project settings, then rebuild.</p>
+      <p className="muted">Set them in .env.local, then rebuild (deploys are built locally from the same file).</p>
     </main>,
   )
 } else {
