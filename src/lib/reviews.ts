@@ -134,9 +134,11 @@ export const STALL_DAYS = 28
 
 /**
  * Stalled: the latest load (as of `asOf`, easy-week sessions skipped) has
- * been unchanged across entries spanning 28+ days.
+ * been unchanged across entries spanning 28+ days. Exercises with no load
+ * (plank) are never stalled (agreed change).
  */
 export function stalled(sessions: readonly SessionData[], exerciseId: string, asOf: string): boolean {
+  if (EXERCISES[exerciseId]?.loadType === 'none') return false
   const list = entriesFor(upTo(sessions, asOf), exerciseId).filter((x) => !x.session.easyWeek)
   if (list.length < 2) return false
   const latest = list[list.length - 1]

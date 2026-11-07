@@ -246,6 +246,11 @@ describe('rule 7: ready to move up', () => {
     expect(readyToMoveUp(bw, 'gobletSquat')?.hint).toBe('Add weight')
   })
 
+  it('plank (no load) never gets a move-up hint', () => {
+    const ss = [full('2026-10-01', null, [45, 45], 'plank'), full('2026-10-03', null, [45, 45], 'plank')]
+    expect(readyToMoveUp(ss, 'plank')).toBeNull()
+  })
+
   it('readyList lists every ready exercise', () => {
     const ss = [
       s('2026-10-01', { entries: [e('latPulldown', 5, [12, 12, 12]), e('chestPress', 3, [12, 12, 12])] }),

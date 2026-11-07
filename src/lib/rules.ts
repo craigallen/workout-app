@@ -176,11 +176,12 @@ export function moveUpHint(exercise: Exercise, load: number | null): string {
 /**
  * Rule 7. Uses the exercise's last two entries across `sessions`, skipping
  * easy-week sessions. Ready when both have every set ≥ repMax, at least the
- * planned set count, and the same load.
+ * planned set count, and the same load. Exercises with no load (plank) never
+ * get a move-up hint (agreed change).
  */
 export function readyToMoveUp(sessions: readonly SessionData[], exerciseId: string): MoveUp | null {
   const exercise = EXERCISES[exerciseId]
-  if (!exercise) return null
+  if (!exercise || exercise.loadType === 'none') return null
   const recent = entriesFor(sessions, exerciseId).filter((x) => !x.session.easyWeek).slice(-2)
   if (recent.length < 2) return null
   const ok = recent.every(({ session, entry }) => {

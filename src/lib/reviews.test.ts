@@ -248,6 +248,13 @@ describe('stalled and missed bumps', () => {
     expect(stalled([lat('2026-10-01', 5)], 'latPulldown', '2026-10-31')).toBe(false)
   })
 
+  it('plank (no load) is never stalled; bodyweight goblet squat still can be', () => {
+    const pl = (d: string) => s(d, { entries: [e('plank', null, [30, 30]), e('gobletSquat', null, [15, 15, 15])] })
+    const ss = [pl('2026-10-01'), pl('2026-10-29')]
+    expect(stalled(ss, 'plank', '2026-10-31')).toBe(false)
+    expect(stalled(ss, 'gobletSquat', '2026-10-31')).toBe(true)
+  })
+
   it('easy-week entries are ignored for stalls', () => {
     expect(stalled([lat('2026-10-01', 5), lat('2026-10-15', 4, [10], { easyWeek: true }), lat('2026-10-29', 5)], 'latPulldown', '2026-10-31')).toBe(true)
   })
