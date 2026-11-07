@@ -4,7 +4,7 @@ Nov 6, 2026 · @Craig Allen
 
 ## Overview
 
-The app is for one user on a phone. It's hosted on Vercel, with Google sign-in and data stored in Firebase, and it replaces the Weightlifting Tracking Google Sheet. You log a lifting session in under a minute, see where the week stands, and the app tells you when to train and when to move up a plate position.
+The app is for one user on a phone. It's hosted on Firebase Hosting, with Google sign-in and data stored in Firebase, and it replaces the Weightlifting Tracking Google Sheet. You log a lifting session in under a minute, see where the week stands, and the app tells you when to train and when to move up a plate position.
 
 It encodes one plan: 3 sessions per Monday to Sunday week on any days, alternating workouts A and B, each done as Full (\~35 min), Short (\~20 min) or Minimum (\~10 min). The equipment is a Marcy MWM-988 (loads logged as plate positions) plus a kettlebell and dumbbells (loads logged in lb).
 
@@ -19,7 +19,7 @@ It encodes one plan: 3 sessions per Monday to Sunday week on any days, alternati
 **Non-goals for the MVP**
 
 - Only one user. Only your Google account can sign in, with no sharing, roles or sign-up flow.
-- No server code of its own. Firebase and a static Vercel build only, with no API routes and no Cloud Functions.
+- No server code of its own. Firebase and a static build on Firebase Hosting only, with no API routes and no Cloud Functions.
 - No push notifications or reminders.
 - No charts or exercise library beyond the plan's exercises.
 - No editing of the plan itself in the UI. The plan lives in one config file.
@@ -31,7 +31,7 @@ The build decisions are settled. Two items are still open.
 | Area | Decision |
 | --- | --- |
 | Device | Phone browser, mobile-first layout |
-| Hosting | Vercel, a static Vite build deployed from a GitHub repo |
+| Hosting | Firebase Hosting, a static Vite build deployed with the Firebase CLI (changed from Vercel on Nov 7, 2026: redirect sign-in works on phones without workarounds when served from `firebaseapp.com`) |
 | Database | Cloud Firestore on Firebase's free Spark plan |
 | Sign-in | Firebase Authentication with Google sign-in, restricted to your Google account by Firestore security rules |
 | Google Sheet | Replaced. Its Workouts tab is imported once as a CSV, then the Sheet is retired |
@@ -215,14 +215,14 @@ The layout is mobile first, for a phone held in one hand between sets. Signed in
 
 ## Tech stack and structure
 
-The stack is Vite, React and TypeScript on Vercel, with the Firebase JS SDK for sign-in and data and no other backend.
+The stack is Vite, React and TypeScript on Firebase Hosting, with the Firebase JS SDK for sign-in and data and no other backend.
 
 - **Firebase:** one project on the free Spark plan, with Authentication (Google provider) and Cloud Firestore. Use the modular SDK, importing only `app`, `auth` and `firestore`.
 - **Offline:** turn on Firestore's persistent local cache so the app loads and saves with no signal. Use the setup the current Firebase docs recommend for the web SDK.
 - **Google sign-in on a phone:** popup and redirect sign-in behave differently in mobile Safari and Chrome. Follow Firebase's current guidance for mobile web, and test sign-in on your phone in the first deploy, not at the end.
-- **Config:** the Firebase web config goes in `VITE_FIREBASE_*` environment variables, in `.env.local` locally and in the Vercel project settings for deploys. Add the Vercel domain(s) to the authorized domains in Firebase Authentication.
+- **Config:** the Firebase web config goes in `VITE_FIREBASE_*` environment variables, in `.env.local`, which is read at build time for local dev and for deploys. The app is opened at `PROJECT_ID.firebaseapp.com` (the `web.app` address redirects there), which is the auth domain.
 - **Rules:** keep `firestore.rules` in the repo and deploy it with the Firebase CLI or paste it into the console.
-- **Vercel:** Vite framework preset, build `npm run build`, output `dist`. The app has no URL routes (tabs are state), so no rewrites are needed.
+- **Firebase Hosting:** `firebase.json` serves `dist` (`npm run deploy` builds and deploys). The app has no URL routes (tabs are state), so no rewrites are needed.
 - **State:** React context that holds the auth user and the live Firestore data. Pure rule functions take that data and return what the screens show.
 - **Styling:** one plain CSS file with CSS variables for the themes. No UI kit, no router.
 - **Tests:** Vitest for `rules.ts`, `reviews.ts`, `csv.ts`, `backup.ts` and `dates.ts`. Firestore code is tested by hand against the acceptance criteria. The Firebase emulator is *Later*.
@@ -254,9 +254,9 @@ Stored dates are plain `YYYY-MM-DD` strings in local time, so a session logged a
 
 ## Acceptance criteria
 
-The MVP is done when every box below is ticked on your phone, against the Vercel deploy.
+The MVP is done when every box below is ticked on your phone, against the Firebase Hosting deploy.
 
-- [ ] `npm install`, `npm run dev` and `npm test` work locally, and `npm run build` succeeds on Vercel.
+- [ ] `npm install`, `npm run dev` and `npm test` work locally, and `npm run build` and `npm run deploy` succeed.
 - [ ] Google sign-in works on the phone. Signing in with a different Google account shows "not authorized" and no data can be read or written (confirmed in the Rules Playground too).
 - [ ] Importing the current Workouts CSV creates 13 sessions dated 6/21/26 to 9/30/26, with no parse errors. The 6/21/26 lat pulldown reads as load 5, sets 12/12/12. Running the import twice adds nothing the second time.
 - [ ] Exporting sessions to CSV and importing that file into a fresh account recreates the same sessions, including easy week and notes. The exported CSV opens in Google Sheets in the old Workouts layout.
@@ -279,18 +279,18 @@ Export this doc as Markdown and save it as `SPEC.md` in an empty project folder.
 Build the workout tracker MVP described in SPEC.md in this folder. Read the whole spec before writing code.
 
 Constraints:
-- Vite + React + TypeScript, plain CSS, Firebase JS SDK (Auth with Google sign-in + Cloud Firestore), deployed as a static site on Vercel.
+- Vite + React + TypeScript, plain CSS, Firebase JS SDK (Auth with Google sign-in + Cloud Firestore), deployed as a static site on Firebase Hosting.
 - No other backend: no API routes, no Cloud Functions, no other database or auth service.
 - Keep dependencies to Vite, React, TypeScript, firebase and Vitest unless you ask me first. Write the CSV parsing yourself (quoted fields included) rather than adding a library, unless you show me why one is needed.
 - Build only what the spec lists. Anything marked Later is out of scope.
-- Check Firebase and Vercel APIs against their current docs rather than memory, and tell me when you're unsure a function or setting exists.
+- Check Firebase APIs against their current docs rather than memory, and tell me when you're unsure a function or setting exists.
 - If a requirement is ambiguous or seems wrong, stop and ask me rather than guessing.
 
 Work in this order, and stop for my review after each step:
 1. Scaffold the project, add plan.ts and types.ts from the spec, and set up Vitest.
 2. Write lib/rules.ts, lib/reviews.ts, lib/csv.ts, lib/backup.ts and lib/dates.ts as pure functions, with unit tests covering every rule, review stat, note and CSV/JSON round-trip in the spec. Run the tests and show me the results.
 3. Walk me through the Firebase console setup: create the project, enable Google sign-in, create Firestore, and deploy firestore.rules with my email. Then add lib/firebase.ts (with the offline cache), the AuthGate and the sign-in screen, and .env.example.
-4. Deploy to Vercel now, with env vars and the authorized domain, so I can test sign-in on my phone before we build more.
+4. Deploy to Firebase Hosting now, so I can test sign-in on my phone before we build more.
 5. Build lib/db.ts, the store, and the Today (with the behind-pace banner and weekly review card) and Log screens. Make sure logging works end to end on my phone.
 6. Build the Progress (weekly review, monthly review with Copy for Claude, history), Body and Plan screens, and Backup and restore with import previews.
 7. Go through the acceptance criteria one by one and report which pass. Fix any that don't.
