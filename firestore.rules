@@ -1,3 +1,7 @@
+// Deployed by pasting into the Firebase console (Firestore > Rules), with
+// YOUR_GOOGLE_EMAIL replaced by the allowed account. The real email is kept
+// out of this public repo, so these rules are deliberately not wired to the
+// Firebase CLI: deploying this file as-is would lock everyone out.
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
